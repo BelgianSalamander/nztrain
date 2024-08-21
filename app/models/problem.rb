@@ -96,4 +96,52 @@ class Problem < ActiveRecord::Base
     return nil if self.points.nil?
     self.points * self.weighting / self.maximum_points
   end
+
+  def score_problem_submissions(submissions, weighting)
+    if submissions.count == 0
+      return nil, nil, nil
+    end
+
+    testsets = self.test_sets;
+    max_score_per_test_set = {};
+    test_set_values = {};
+
+    max_points = 0;
+    testsets.each do |x|
+      max_score_per_test_set[x.id] = 0;
+      test_set_values[x.id] = x.points;
+      max_points += x.points;
+    end
+
+    curr_subtask_score = 0;
+    curr_score = 0;
+    best_submission = nil;
+    attempt = 1;
+
+    submissions.each_with_index do |submission, idx|
+      if submission.points > curr_score
+        best_submission = submission;
+        curr_score = submission.points;
+        attempt = idx + 1;
+      end
+      
+      submission.judge_data.test_sets.each do |(test_set_id, set_data)|
+        if test_set_values.has_key?(test_set_id)
+          score_from_test_set = test_set_values[test_set_id] * set_data.evaluation;
+          if score_from_test_set > max_score_per_test_set[test_set_id]
+            curr_subtask_score += score_from_test_set - max_score_per_test_set[test_set_id];
+            max_score_per_test_set[test_set_id] = score_from_test_set;
+          end
+        end
+      end
+
+      if curr_subtask_score > curr_score
+        curr_score = curr_subtask_score;
+        attempt = idx + 1;
+      end
+    end
+
+    score = (max_points == 0) ? nil : (curr_score * weighting / max_points).to_i;
+    return score, attempt, best_submission
+  end
 end

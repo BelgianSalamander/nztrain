@@ -23,4 +23,10 @@
   Hidden (you can only see your own score until the end of the contest)
 <% end %>
 <br>
+<b>Scoring method: </b>
+<% if @contest.use_subtask_scoring %>
+  Subtask Scoring (Your score on a problem is the sum of the maximum score you got on each subtask)
+<% else %>
+  Problem Scoring (Your score on a problem is the maximum score on any of your submissions)
+<% end %>
 
